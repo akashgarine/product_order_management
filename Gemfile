@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 ruby '3.0.0'
 
+
+gem 'rack-attack'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.1.7'
 # Use postgresql as the database for Active Record

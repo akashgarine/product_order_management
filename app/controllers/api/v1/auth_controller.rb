@@ -4,7 +4,9 @@ module Api
       skip_before_action :authenticate_request!
 
       def login
-        user = User.find_by(email: params[:email])
+        normalized_email = params[:email].to_s.strip.downcase
+        user = User.find_by(email: normalized_email)
+        
         if user&.authenticate(params[:password])
           token = JsonWebToken.encode(user_id: user.id)
           render json: { token: token, user: UserSerializer.new(user) }, status: :ok

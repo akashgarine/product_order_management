@@ -38,7 +38,8 @@ module Api
       private
 
       def set_order
-        @order = Order.find(params[:id])
+        @order = current_user.orders.find_by(id: params[:id])
+        render_error('Order not found', :not_found) unless @order
       end
 
       def order_params
