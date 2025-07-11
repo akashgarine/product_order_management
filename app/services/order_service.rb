@@ -10,6 +10,7 @@ class OrderService
     ActiveRecord::Base.transaction do
       @order = Order.new
       process_order_items(params[:order_items_attributes])
+      @order.total_amount = calculate_total
       @order.save!
       @order
     end
@@ -23,21 +24,24 @@ class OrderService
 
   def self.list(page: 1, per_page: 10)
     Order.includes(:order_items, :products)
-         .page(page)
-         .per(per_page)
+        .page(page)
+        .per(per_page)
   end
 
   def process_order
+    ActiveRecord::Base.transaction do 
     @order.order_items.each do |item|
-      product = item.product
+      product = item.product.lock!
+          raise InsufficientStockError, "Insufficient stock for #{product.name}" if product.quantity < item.quantity
       product.update!(quantity: product.quantity - item.quantity)
     end
     @order.update!(status: 'processing')
   end
 
   def cancel_order
+    ActiveRecord::Base.transaction do
     @order.order_items.each do |item|
-      product = item.product
+      product = item.product.lock! 
       product.update!(quantity: product.quantity + item.quantity)
     end
     @order.update!(status: 'cancelled')
@@ -76,7 +80,6 @@ class OrderService
         price_at_time_of_order: product.price
       )
 
-      product.update!(quantity: product.quantity - quantity)
     end
   end
 
